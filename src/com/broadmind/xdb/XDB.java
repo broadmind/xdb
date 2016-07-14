@@ -3,6 +3,8 @@ package com.broadmind.xdb;
 import java.util.*;
 import java.io.*;
 
+import com.broadmind.xdb.ConnectionPool;
+
 public class XDB extends java.lang.Object
 {
 
@@ -196,6 +198,44 @@ log( "ARDBUsername=" + g_strARUsername );
 	public boolean isClearPasswords()
 	{
 		return m_bClearPasswords;
+	}
+
+	public ConnectionPool getRWConnectionPool()
+	{
+		return m_cRWConnectionPool;
+	}
+	public ConnectionPool getROConnectionPool()
+	{
+		return m_cROConnectionPool;
+	}
+	public ConnectionPool getREConnectionPool()
+	{
+		return m_cREConnectionPool;
+	}
+	public ConnectionPool getARConnectionPool()
+	{
+		return m_cARConnectionPool;
+	}
+
+	public void resetRWConnectionPool() throws Exception
+	{
+		m_cRWConnectionPool = null;
+		initialize( m_strConfFile );
+	}
+	public void resetROConnectionPool() throws Exception
+	{
+		m_cROConnectionPool = null;
+		initialize( m_strConfFile );
+	}
+	public void resetREConnectionPool() throws Exception
+	{
+		m_cREConnectionPool = null;
+		initialize( m_strConfFile );
+	}
+	public void resetARConnectionPool() throws Exception
+	{
+		m_cARConnectionPool = null;
+		initialize( m_strConfFile );
 	}
 
 	public String getRWConnectionPoolStatus()
