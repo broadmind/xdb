@@ -13,6 +13,8 @@ package com.broadmind.xdb;
 import java.sql.*;
 import java.util.*;
 
+import javax.xml.bind.annotation.*;
+
 /** A class for preallocating, recycling, and managing
  *  JDBC connections.
  *  <P>
@@ -22,6 +24,8 @@ import java.util.*;
  *  &copy; 2000 Marty Hall; may be freely used or adapted.
  */
 
+@XmlAccessorType(XmlAccessType.NONE)
+@XmlRootElement(name = "pool")
 //public class ConnectionPool implements Runnable, java.io.Serializable {
 public class ConnectionPool implements Runnable {
   private String driver, url, username, password;
@@ -29,6 +33,11 @@ public class ConnectionPool implements Runnable {
   private boolean waitIfBusy;
   private Vector<Connection> availableConnections, busyConnections;
   private boolean connectionPending = false;
+
+  @SuppressWarnings("unused")
+  private ConnectionPool()
+  {
+  }
 
   public ConnectionPool(String driver, String url,
                         String username, String password,
@@ -87,7 +96,7 @@ public class ConnectionPool implements Runnable {
       //    flag is true. Then do the same thing as in second
       //    part of step 1: wait for next available connection.
       
-      if ((totalConnections() < maxConnections) &&
+      if ((getTotalConnections() < maxConnections) &&
           !connectionPending) {
         makeBackgroundConnection();
       } else if (!waitIfBusy) {
@@ -174,10 +183,36 @@ public class ConnectionPool implements Runnable {
     // Wake up threads that are waiting for a connection
     notifyAll(); 
   }
-    
-  public synchronized int totalConnections() {
+
+  @XmlElement(name = "url")
+  public synchronized String getUrl() {
+    return(url);
+  }
+
+  @XmlElement(name = "username")
+  public synchronized String getUsername() {
+    return(username);
+  }
+
+  @XmlElement(name = "available")
+  public synchronized int getAvailableConnections() {
+    return(availableConnections.size());
+  }
+
+  @XmlElement(name = "busy")
+  public synchronized int getBusyConnections() {
+    return(busyConnections.size());
+  }
+
+  @XmlElement(name = "total")
+  public synchronized int getTotalConnections() {
     return(availableConnections.size() +
            busyConnections.size());
+  }
+  
+  @XmlElement(name = "max")
+  public synchronized int getMaxConnections() {
+    return(maxConnections);
   }
 
   /** Close all the connections. Use with caution:
