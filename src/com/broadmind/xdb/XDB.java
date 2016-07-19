@@ -14,6 +14,7 @@ public class XDB extends java.lang.Object
 	private String g_strRWPassword = null;
 	private int g_nRWInitial = 1;
 	private int g_nRWMax = 10;
+	private boolean g_bRWWait = true;
 
 	private String g_strRODriver = null;
 	private String g_strROURI = null;
@@ -21,6 +22,7 @@ public class XDB extends java.lang.Object
 	private String g_strROPassword = null;
 	private int g_nROInitial = 1;
 	private int g_nROMax = 10;
+	private boolean g_bROWait = true;
 
 	private String g_strREDriver = null;
 	private String g_strREURI = null;
@@ -28,6 +30,7 @@ public class XDB extends java.lang.Object
 	private String g_strREPassword = null;
 	private int g_nREInitial = 1;
 	private int g_nREMax = 10;
+	private boolean g_bREWait = true;
 
 	private String g_strARDriver = null;
 	private String g_strARURI = null;
@@ -35,6 +38,7 @@ public class XDB extends java.lang.Object
 	private String g_strARPassword = null;
 	private int g_nARInitial = 1;
 	private int g_nARMax = 10;
+	private boolean g_bARWait = true;
 
 	private ConnectionPool m_cRWConnectionPool = null;
 	private ConnectionPool m_cROConnectionPool = null;
@@ -124,6 +128,9 @@ log( "ARDBUsername=" + g_strARUsername );
 		strValue = props.getProperty( "RWDBMax" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_nRWMax = Integer.parseInt( strValue );
+		strValue = props.getProperty( "RWDBWait" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bRWWait = Boolean.parseBoolean( strValue );
 
 		strValue = props.getProperty( "RODBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -131,6 +138,9 @@ log( "ARDBUsername=" + g_strARUsername );
 		strValue = props.getProperty( "RODBMax" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_nROMax = Integer.parseInt( strValue );
+		strValue = props.getProperty( "RODBWait" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bROWait = Boolean.parseBoolean( strValue );
 
 		strValue = props.getProperty( "REDBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -138,6 +148,9 @@ log( "ARDBUsername=" + g_strARUsername );
 		strValue = props.getProperty( "REDBMax" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_nREMax = Integer.parseInt( strValue );
+		strValue = props.getProperty( "REDBWait" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bREWait = Boolean.parseBoolean( strValue );
 
 		strValue = props.getProperty( "ARDBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -145,13 +158,16 @@ log( "ARDBUsername=" + g_strARUsername );
 		strValue = props.getProperty( "ARDBMax" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_nARMax = Integer.parseInt( strValue );
+		strValue = props.getProperty( "ARDBWait" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bARWait = Boolean.parseBoolean( strValue );
 
 		try
 		{
-			m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, false );
-			m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, false );
-			m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, false );
-			m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, false );
+			m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, g_bRWWait );
+			m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, g_bROWait );
+			m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, g_bREWait );
+			m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, g_bARWait );
 		}
 		catch ( Exception e )
 		{
