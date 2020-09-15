@@ -33,6 +33,7 @@ public class ConnectionPool implements Runnable {
   private boolean waitIfBusy;
   private Vector<Connection> availableConnections, busyConnections;
   private boolean connectionPending = false;
+  private String initSql = null;
 
   @SuppressWarnings("unused")
   private ConnectionPool()
@@ -43,7 +44,8 @@ public class ConnectionPool implements Runnable {
                         String username, String password,
                         int initialConnections,
                         int maxConnections,
-                        boolean waitIfBusy)
+                        boolean waitIfBusy,
+                        String initSql)
       throws SQLException {
     this.driver = driver;
     this.url = url;
@@ -51,6 +53,7 @@ public class ConnectionPool implements Runnable {
     this.password = password;
     this.maxConnections = maxConnections;
     this.waitIfBusy = waitIfBusy;
+	this.initSql = initSql;
     if (initialConnections > maxConnections) {
       initialConnections = maxConnections;
     }
@@ -60,7 +63,16 @@ public class ConnectionPool implements Runnable {
       availableConnections.addElement(makeNewConnection());
     }
   }
-  
+
+  public ConnectionPool(String driver, String url,
+                        String username, String password,
+                        int initialConnections,
+                        int maxConnections,
+                        boolean waitIfBusy)
+      throws SQLException {
+	  this(driver, url, username, password, initialConnections, maxConnections, waitIfBusy, null);
+  }
+
   public synchronized Connection getConnection()
       throws SQLException {
     if (!availableConnections.isEmpty()) {
@@ -158,6 +170,19 @@ public class ConnectionPool implements Runnable {
       // Establish network connection to database
       Connection connection =
         DriverManager.getConnection(url, username, password);
+      if (initSql != null) {
+        Statement stmt = null;
+        try {
+          stmt = connection.createStatement();
+          stmt.execute(initSql);
+        }
+        catch(Exception e) {
+        }
+        finally {
+        	if (stmt != null)
+              stmt.close();
+        }
+      }
       return(connection);
     } catch(ClassNotFoundException cnfe) {
       // Simplify try/catch blocks of people using this by
@@ -209,10 +234,15 @@ public class ConnectionPool implements Runnable {
     return(availableConnections.size() +
            busyConnections.size());
   }
-  
+
   @XmlElement(name = "max")
   public synchronized int getMaxConnections() {
     return(maxConnections);
+  }
+
+  @XmlElement(name = "init")
+  public synchronized String getInitSql() {
+    return(initSql);
   }
 
   /** Close all the connections. Use with caution:
@@ -250,7 +280,8 @@ public class ConnectionPool implements Runnable {
       "ConnectionPool(" + url + "," + username + ")" +
       ", available=" + availableConnections.size() +
       ", busy=" + busyConnections.size() +
-      ", max=" + maxConnections;
+      ", max=" + maxConnections +
+      ", init=" + initSql;
     return(info);
   }
 }

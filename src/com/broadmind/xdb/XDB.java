@@ -15,6 +15,7 @@ public class XDB extends java.lang.Object
 	private int g_nRWInitial = 1;
 	private int g_nRWMax = 10;
 	private boolean g_bRWWait = true;
+	private String g_strRWInitSql = null;
 
 	private String g_strRODriver = null;
 	private String g_strROURI = null;
@@ -23,6 +24,7 @@ public class XDB extends java.lang.Object
 	private int g_nROInitial = 1;
 	private int g_nROMax = 10;
 	private boolean g_bROWait = true;
+	private String g_strROInitSql = null;
 
 	private String g_strREDriver = null;
 	private String g_strREURI = null;
@@ -31,6 +33,7 @@ public class XDB extends java.lang.Object
 	private int g_nREInitial = 1;
 	private int g_nREMax = 10;
 	private boolean g_bREWait = true;
+	private String g_strREInitSql = null;
 
 	private String g_strARDriver = null;
 	private String g_strARURI = null;
@@ -39,6 +42,7 @@ public class XDB extends java.lang.Object
 	private int g_nARInitial = 1;
 	private int g_nARMax = 10;
 	private boolean g_bARWait = true;
+	private String g_strARInitSql = null;
 
 	private ConnectionPool m_cRWConnectionPool = null;
 	private ConnectionPool m_cROConnectionPool = null;
@@ -164,10 +168,10 @@ log( "ARDBUsername=" + g_strARUsername );
 
 		try
 		{
-			m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, g_bRWWait );
-			m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, g_bROWait );
-			m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, g_bREWait );
-			m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, g_bARWait );
+			m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, g_bRWWait, g_strRWInitSql );
+			m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, g_bROWait, g_strROInitSql );
+			m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, g_bREWait, g_strREInitSql );
+			m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, g_bARWait, g_strARInitSql );
 		}
 		catch ( Exception e )
 		{
