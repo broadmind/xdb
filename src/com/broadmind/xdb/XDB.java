@@ -69,6 +69,11 @@ public class XDB extends java.lang.Object
 		initialize( m_strConfFile );
 	}
 
+	public XDB( Properties props ) throws Exception
+	{
+		initialize( props );
+	}
+
 	private void initialize( String strConfFile ) throws Exception
 	{
 
@@ -85,6 +90,11 @@ public class XDB extends java.lang.Object
 			throw e;
 		}
 
+		initialize( props );
+	}
+
+	private void initialize( Properties props ) throws Exception
+	{
 		String strValue = null;
 
 		strValue = props.getProperty( "LogFile" );
@@ -99,7 +109,9 @@ log( "RWDBURI=" + g_strRWURI );
 		g_strRWUsername = props.getProperty( "RWDBUsername" );
 log( "RWDBUsername=" + g_strRWUsername );
 		g_strRWPassword = props.getProperty( "RWDBPassword" );
-log( "RWDBPassword=" + g_strRWPassword );
+//log( "RWDBPassword=" + g_strRWPassword );
+		g_strRWInitSql = props.getProperty( "RWDBInitSql" );
+log( "RWDBInitSql=" + g_strRWInitSql );
 
 		g_strRODriver = props.getProperty( "RODBDriver" );
 log( "RODBDriver=" + g_strRODriver );
@@ -108,7 +120,9 @@ log( "RODBURI=" + g_strROURI );
 		g_strROUsername = props.getProperty( "RODBUsername" );
 log( "RODBUsername=" + g_strROUsername );
 		g_strROPassword = props.getProperty( "RODBPassword" );
-log( "RODBPassword=" + g_strROPassword );
+//log( "RODBPassword=" + g_strROPassword );
+		g_strROInitSql = props.getProperty( "RODBInitSql" );
+log( "RODBInitSql=" + g_strROInitSql );
 
 		g_strREDriver = props.getProperty( "REDBDriver" );
 log( "REDBDriver=" + g_strREDriver );
@@ -117,6 +131,9 @@ log( "REDBURI=" + g_strREURI );
 		g_strREUsername = props.getProperty( "REDBUsername" );
 log( "REDBUsername=" + g_strREUsername );
 		g_strREPassword = props.getProperty( "REDBPassword" );
+//log( "REDBPassword=" + g_strREPassword );
+		g_strREInitSql = props.getProperty( "REDBInitSql" );
+log( "REDBInitSql=" + g_strREInitSql );
 
 		g_strARDriver = props.getProperty( "ARDBDriver" );
 log( "ARDBDriver=" + g_strARDriver );
@@ -125,6 +142,9 @@ log( "ARDBURI=" + g_strARURI );
 		g_strARUsername = props.getProperty( "ARDBUsername" );
 log( "ARDBUsername=" + g_strARUsername );
 		g_strARPassword = props.getProperty( "ARDBPassword" );
+//log( "ARDBPassword=" + g_strARPassword );
+		g_strARInitSql = props.getProperty( "ARDBInitSql" );
+log( "ARDBInitSql=" + g_strARInitSql );
 
 		strValue = props.getProperty( "RWDBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
