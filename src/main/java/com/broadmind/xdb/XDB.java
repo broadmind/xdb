@@ -11,12 +11,16 @@
 package com.broadmind.xdb;
 
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.*;
 
 import com.broadmind.xdb.ConnectionPool;
 
 public class XDB extends java.lang.Object
 {
+
+	static final Logger logger = LoggerFactory.getLogger("XDB");
 
 	private String g_strRWDriver = null;
 	private String g_strRWURI = null;
@@ -25,6 +29,7 @@ public class XDB extends java.lang.Object
 	private int g_nRWInitial = 1;
 	private int g_nRWMax = 10;
 	private boolean g_bRWWait = true;
+	private long g_lRWWaitTimeout = 0;
 	private String g_strRWInitSql = null;
 
 	private String g_strRODriver = null;
@@ -34,6 +39,7 @@ public class XDB extends java.lang.Object
 	private int g_nROInitial = 1;
 	private int g_nROMax = 10;
 	private boolean g_bROWait = true;
+	private long g_lROWaitTimeout = 0;
 	private String g_strROInitSql = null;
 
 	private String g_strREDriver = null;
@@ -43,6 +49,7 @@ public class XDB extends java.lang.Object
 	private int g_nREInitial = 1;
 	private int g_nREMax = 10;
 	private boolean g_bREWait = true;
+	private long g_lREWaitTimeout = 0;
 	private String g_strREInitSql = null;
 
 	private String g_strARDriver = null;
@@ -52,6 +59,7 @@ public class XDB extends java.lang.Object
 	private int g_nARInitial = 1;
 	private int g_nARMax = 10;
 	private boolean g_bARWait = true;
+	private long g_lARWaitTimeout = 0;
 	private String g_strARInitSql = null;
 
 	private ConnectionPool m_cRWConnectionPool = null;
@@ -62,11 +70,9 @@ public class XDB extends java.lang.Object
 	//private String m_strConfFile = "/etc/xdb.conf";
 	private String m_strConfFile = "xdb.conf";
 
-	private String m_strLogFile = null;
-
 	private boolean m_bClearPasswords = true;
 
-	public PrintWriter out;
+	private Properties props = new Properties();
 
 	public XDB() throws Exception
 	{
@@ -87,30 +93,28 @@ public class XDB extends java.lang.Object
 	private void initialize( String strConfFile ) throws Exception
 	{
 
-		Properties props = new Properties();
-		try
-		{
-			FileInputStream fin = new FileInputStream( strConfFile );
-			props.load( fin );
-			fin.close();
-		}
-		catch ( Exception e )
-		{
-			System.out.println( "conf file Exception: " + e.getMessage() );
-			throw e;
-		}
+		setConfFile( strConfFile );
 
-		initialize( props );
+		reset();
 	}
 
 	private void initialize( Properties props ) throws Exception
 	{
+
+		if (props != null)
+			this.props = props;
+
+		reset();
+	}
+
+	public void reset() throws Exception
+	{
 		String strValue = null;
 
-		strValue = props.getProperty( "LogFile" );
-		if ( strValue != null )
-			m_strLogFile = strValue;
-		setLogFile( m_strLogFile );
+		m_cRWConnectionPool = null;
+		m_cROConnectionPool = null;
+		m_cREConnectionPool = null;
+		m_cARConnectionPool = null;
 
 		g_strRWDriver = props.getProperty( "RWDBDriver" );
 log( "RWDBDriver=" + g_strRWDriver );
@@ -165,6 +169,9 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "RWDBWait" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_bRWWait = Boolean.parseBoolean( strValue );
+		strValue = props.getProperty( "RWDBWaitTimeout" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_lRWWaitTimeout = Long.parseLong( strValue );
 
 		strValue = props.getProperty( "RODBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -175,6 +182,9 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "RODBWait" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_bROWait = Boolean.parseBoolean( strValue );
+		strValue = props.getProperty( "RODBWaitTimeout" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_lROWaitTimeout = Long.parseLong( strValue );
 
 		strValue = props.getProperty( "REDBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -185,6 +195,9 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "REDBWait" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_bREWait = Boolean.parseBoolean( strValue );
+		strValue = props.getProperty( "REDBWaitTimeout" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_lREWaitTimeout = Long.parseLong( strValue );
 
 		strValue = props.getProperty( "ARDBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -195,13 +208,16 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "ARDBWait" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_bARWait = Boolean.parseBoolean( strValue );
+		strValue = props.getProperty( "ARDBWaitTimeout" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_lARWaitTimeout = Long.parseLong( strValue );
 
 		try
 		{
-			m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, g_bRWWait, g_strRWInitSql );
-			m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, g_bROWait, g_strROInitSql );
-			m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, g_bREWait, g_strREInitSql );
-			m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, g_bARWait, g_strARInitSql );
+			m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, g_bRWWait, g_lRWWaitTimeout, g_strRWInitSql );
+			m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, g_bROWait, g_lROWaitTimeout, g_strROInitSql );
+			m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, g_bREWait, g_lREWaitTimeout, g_strREInitSql );
+			m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, g_bARWait, g_lARWaitTimeout, g_strARInitSql );
 		}
 		catch ( Exception e )
 		{
@@ -210,34 +226,31 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		}
 	}
 
+	public void setProps(Properties props)
+	{
+		this.props = props;
+	}
+
+	public void setConfFile(String strConfFile) throws Exception
+	{
+		m_strConfFile = strConfFile;
+		props = new Properties();
+		try
+		{
+			FileInputStream fin = new FileInputStream( strConfFile );
+			props.load( fin );
+			fin.close();
+		}
+		catch ( Exception e )
+		{
+			System.out.println( "conf file Exception: " + e.getMessage() );
+			throw e;
+		}
+	}
+
 	public String getConfFile()
 	{
 		return m_strConfFile;
-	}
-
-	public void setLogFile( String strLogFile ) throws Exception
-	{
-		m_strLogFile = strLogFile;
-		if ( m_strLogFile != null && m_strLogFile.length() > 0 )
-		{
-			try
-			{
-				out = new PrintWriter( new FileOutputStream( m_strLogFile, true ), true );
-			}
-			catch ( Exception e )
-			{
-				out = new PrintWriter( System.out, true );
-			}
-		}
-		else
-		{
-			out = new PrintWriter( System.out, true );
-		}
-	}
-
-	public String getLogFile()
-	{
-		return m_strLogFile;
 	}
 
 	public void setClearPasswords( boolean bClearPasswords )
@@ -270,22 +283,22 @@ log( "ARDBInitSql=" + g_strARInitSql );
 	public void resetRWConnectionPool() throws Exception
 	{
 		m_cRWConnectionPool = null;
-		initialize( m_strConfFile );
+		reset();
 	}
 	public void resetROConnectionPool() throws Exception
 	{
 		m_cROConnectionPool = null;
-		initialize( m_strConfFile );
+		reset();
 	}
 	public void resetREConnectionPool() throws Exception
 	{
 		m_cREConnectionPool = null;
-		initialize( m_strConfFile );
+		reset();
 	}
 	public void resetARConnectionPool() throws Exception
 	{
 		m_cARConnectionPool = null;
-		initialize( m_strConfFile );
+		reset();
 	}
 
 	public String getRWConnectionPoolStatus()
@@ -317,22 +330,16 @@ log( "ARDBInitSql=" + g_strARInitSql );
 			return "(null)";
 	}
 
-	public void reset() throws Exception
-	{
-		m_cRWConnectionPool = null;
-		m_cROConnectionPool = null;
-		m_cREConnectionPool = null;
-		m_cARConnectionPool = null;
-
-		initialize( m_strConfFile );
-	}
-
 
 	public java.sql.Connection getRWConnection() throws java.sql.SQLException
 	{
 		if ( m_cRWConnectionPool == null )
 			return null;
-		return m_cRWConnectionPool.getConnection();
+		//return m_cRWConnectionPool.getConnection();
+		long start = System.nanoTime()/1000000;
+		java.sql.Connection con = m_cRWConnectionPool.getConnection();
+		m_cRWConnectionPool.incrementSyncWaitTime((long)(System.nanoTime()/1000000 - start));
+		return con;
 	}
 	public void releaseRWConnection( java.sql.Connection con ) throws java.sql.SQLException
 	{
@@ -346,7 +353,11 @@ log( "ARDBInitSql=" + g_strARInitSql );
 	{
 		if ( m_cROConnectionPool == null )
 			return null;
-		return m_cROConnectionPool.getConnection();
+		//return m_cROConnectionPool.getConnection();
+		long start = System.nanoTime()/1000000;
+		java.sql.Connection con = m_cROConnectionPool.getConnection();
+		m_cROConnectionPool.incrementSyncWaitTime((long)(System.nanoTime()/1000000 - start));
+		return con;
 	}
 	public void releaseROConnection( java.sql.Connection con ) throws java.sql.SQLException
 	{
@@ -360,7 +371,11 @@ log( "ARDBInitSql=" + g_strARInitSql );
 	{
 		if ( m_cREConnectionPool == null )
 			return null;
-		return m_cREConnectionPool.getConnection();
+		//return m_cREConnectionPool.getConnection();
+		long start = System.nanoTime()/1000000;
+		java.sql.Connection con = m_cREConnectionPool.getConnection();
+		m_cREConnectionPool.incrementSyncWaitTime((long)(System.nanoTime()/1000000 - start));
+		return con;
 	}
 	public void releaseREConnection( java.sql.Connection con ) throws java.sql.SQLException
 	{
@@ -374,7 +389,11 @@ log( "ARDBInitSql=" + g_strARInitSql );
 	{
 		if ( m_cARConnectionPool == null )
 			return null;
-		return m_cARConnectionPool.getConnection();
+		//return m_cARConnectionPool.getConnection();
+		long start = System.nanoTime()/1000000;
+		java.sql.Connection con = m_cARConnectionPool.getConnection();
+		m_cARConnectionPool.incrementSyncWaitTime((long)(System.nanoTime()/1000000 - start));
+		return con;
 	}
 	public void releaseARConnection( java.sql.Connection con ) throws java.sql.SQLException
 	{
@@ -382,6 +401,12 @@ log( "ARDBInitSql=" + g_strARInitSql );
 			return;
 		if ( con != null )
 			m_cARConnectionPool.free( con );
+	}
+
+	public void log( String msg )
+	{
+		//out.println( new java.sql.Timestamp(System.currentTimeMillis()) + " XDB: " + msg );
+	    logger.debug( msg );
 	}
 
 
@@ -485,11 +510,6 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		date.add( Calendar.MONTH, adjustmonths + 1 );
 		date.add( java.util.Calendar.DAY_OF_YEAR, -1 );
 		return date.getTime().getTime();
-	}
-
-	public void log( String msg )
-	{
-		out.println( new java.sql.Timestamp(System.currentTimeMillis()) + " " + msg );
 	}
 
 }
