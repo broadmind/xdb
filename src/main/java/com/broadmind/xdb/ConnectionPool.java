@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-//	Copyright 2001-2011
+//	Copyright 2001-2022
 //	Broadmind Research Corporation (http://www.broadmind.com)
 //
 //	Author: Chad Attermann
