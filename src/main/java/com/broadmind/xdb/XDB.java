@@ -31,6 +31,7 @@ public class XDB extends java.lang.Object
 	private boolean g_bRWWait = true;
 	private long g_lRWWaitTimeout = 0;
 	private String g_strRWInitSql = null;
+	private boolean g_bRWCheckValid = false;
 
 	private String g_strRODriver = null;
 	private String g_strROURI = null;
@@ -41,6 +42,7 @@ public class XDB extends java.lang.Object
 	private boolean g_bROWait = true;
 	private long g_lROWaitTimeout = 0;
 	private String g_strROInitSql = null;
+	private boolean g_bROCheckValid = false;
 
 	private String g_strREDriver = null;
 	private String g_strREURI = null;
@@ -51,6 +53,7 @@ public class XDB extends java.lang.Object
 	private boolean g_bREWait = true;
 	private long g_lREWaitTimeout = 0;
 	private String g_strREInitSql = null;
+	private boolean g_bRECheckValid = false;
 
 	private String g_strARDriver = null;
 	private String g_strARURI = null;
@@ -61,6 +64,7 @@ public class XDB extends java.lang.Object
 	private boolean g_bARWait = true;
 	private long g_lARWaitTimeout = 0;
 	private String g_strARInitSql = null;
+	private boolean g_bARCheckValid = false;
 
 	private ConnectionPool m_cRWConnectionPool = null;
 	private ConnectionPool m_cROConnectionPool = null;
@@ -172,6 +176,9 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "RWDBWaitTimeout" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_lRWWaitTimeout = Long.parseLong( strValue );
+		strValue = props.getProperty( "RWDBCheckValid" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bRWCheckValid = Boolean.parseBoolean( strValue );
 
 		strValue = props.getProperty( "RODBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -185,6 +192,9 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "RODBWaitTimeout" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_lROWaitTimeout = Long.parseLong( strValue );
+		strValue = props.getProperty( "ODBCheckValid" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bROCheckValid = Boolean.parseBoolean( strValue );
 
 		strValue = props.getProperty( "REDBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -198,6 +208,9 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "REDBWaitTimeout" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_lREWaitTimeout = Long.parseLong( strValue );
+		strValue = props.getProperty( "REDBCheckValid" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bRECheckValid = Boolean.parseBoolean( strValue );
 
 		strValue = props.getProperty( "ARDBInitial" );
 		if ( strValue != null && strValue.length() > 0 )
@@ -211,13 +224,32 @@ log( "ARDBInitSql=" + g_strARInitSql );
 		strValue = props.getProperty( "ARDBWaitTimeout" );
 		if ( strValue != null && strValue.length() > 0 )
 			g_lARWaitTimeout = Long.parseLong( strValue );
+		strValue = props.getProperty( "ARDBCheckValid" );
+		if ( strValue != null && strValue.length() > 0 )
+			g_bARCheckValid = Boolean.parseBoolean( strValue );
 
 		try
 		{
-			m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, g_bRWWait, g_lRWWaitTimeout, g_strRWInitSql );
-			m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, g_bROWait, g_lROWaitTimeout, g_strROInitSql );
-			m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, g_bREWait, g_lREWaitTimeout, g_strREInitSql );
-			m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, g_bARWait, g_lARWaitTimeout, g_strARInitSql );
+			if (g_strRWDriver != null) {
+				log("Initializing RW connection pool...");
+				m_cRWConnectionPool = new ConnectionPool( g_strRWDriver, g_strRWURI, g_strRWUsername, g_strRWPassword, g_nRWInitial, g_nRWMax, g_bRWWait, g_lRWWaitTimeout, g_strRWInitSql );
+				m_cRWConnectionPool.setCheckValid(g_bRWCheckValid);
+			}
+			if (g_strRODriver != null) {
+				log("Initializing RO connection pool...");
+				m_cROConnectionPool = new ConnectionPool( g_strRODriver, g_strROURI, g_strROUsername, g_strROPassword, g_nROInitial, g_nROMax, g_bROWait, g_lROWaitTimeout, g_strROInitSql );
+				m_cROConnectionPool.setCheckValid(g_bROCheckValid);
+			}
+			if (g_strREDriver != null) {
+				log("Initializing RE connection pool...");
+				m_cREConnectionPool = new ConnectionPool( g_strREDriver, g_strREURI, g_strREUsername, g_strREPassword, g_nREInitial, g_nREMax, g_bREWait, g_lREWaitTimeout, g_strREInitSql );
+				m_cREConnectionPool.setCheckValid(g_bRECheckValid);
+			}
+			if (g_strARDriver != null) {
+				log("Initializing AR connection pool...");
+				m_cARConnectionPool = new ConnectionPool( g_strARDriver, g_strARURI, g_strARUsername, g_strARPassword, g_nARInitial, g_nARMax, g_bARWait, g_lARWaitTimeout, g_strARInitSql );
+				m_cARConnectionPool.setCheckValid(g_bARCheckValid);
+			}
 		}
 		catch ( Exception e )
 		{

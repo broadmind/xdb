@@ -30,6 +30,7 @@ public class ConnectionPool implements Runnable {
   private Vector<Connection> availableConnections, busyConnections;
   private boolean connectionPending = false;
   private String initSql = null;
+  private boolean checkValid = false;
 
   // stats
   private long waitCount = 0;
@@ -55,7 +56,7 @@ public class ConnectionPool implements Runnable {
     this.maxConnections = maxConnections;
     this.waitIfBusy = waitIfBusy;
     this.waitTimeout = waitTimeout;
-	this.initSql = initSql;
+    this.initSql = initSql;
     if (initialConnections > maxConnections) {
       initialConnections = maxConnections;
     }
@@ -122,6 +123,35 @@ public class ConnectionPool implements Runnable {
     return initSql;
   }
 
+  public synchronized void setCheckValid(boolean checkValid) {
+    this.checkValid = checkValid;
+  }
+  public synchronized boolean getCheckValid() {
+    return this.checkValid;
+  }
+
+  private boolean isConnectionValid(Connection connection) {
+      // CBA Note that isClosed() does not necessarily test connection validity,
+      //  so isValid() is also required.
+      try {
+        if (connection.isClosed()) {
+          log("Connection is closed");
+          return false;
+        }
+        if (checkValid) {
+          if (!connection.isValid(1)) {
+            log("Connection is invalid");
+            return false;
+          }
+        }
+        return true;
+      }
+      catch (SQLException ex) {
+        log("Connection validity check exception");
+        return false;
+      }
+  }
+
   public Connection getConnection()
       throws SQLException {
     return getConnection(System.nanoTime()/1000000, 0);
@@ -140,9 +170,7 @@ public class ConnectionPool implements Runnable {
       // and repeat the process of obtaining a connection.
       // Also wake up threads that were waiting for a
       // connection because maxConnection limit was reached.
-      // CBA Note that isClosed() does not necessarily test connection validity,
-      //  so isValid() is also required.
-      if (existingConnection.isClosed() || !existingConnection.isValid(1)) {
+      if (!isConnectionValid(existingConnection)) {
         ++waitCount;
         notifyAll(); // Freed up a spot for anybody waiting
         return getConnection(start, iteration+1);
@@ -219,10 +247,7 @@ public class ConnectionPool implements Runnable {
         // and repeat the process of obtaining a connection.
         // Also wake up threads that were waiting for a
         // connection because maxConnection limit was reached.
-        // CBA Note that isClosed() does not necessarily test connection validity,
-        //  so isValid() is also required.
-        if (con.isClosed()) {
-        //if (con.isClosed() || !con.isValid(1)) {
+        if (!isConnectionValid(con)) {
           // close bad connection just in case
           con.close();
           con = null;
